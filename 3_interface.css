@@ -1,7 +1,0 @@
-.custom-radio .custom-control-input:checked ~ 
-.custom-control-label::before {
-  background-color:black;
-}
-.custom-radio .custom-control-label{
-  cursor: pointer;
-}
