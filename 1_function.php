@@ -1,7 +1,16 @@
-
 <?php
+
+declare(strict_types=1);
 class CustomError extends AssertionError
 { }
+
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+	// RangeTest();
+	NormalDistributionTest();
+	ItemCharacteristicCurveTest();
+	AbilityEstimationTest();
+	QuarityTest();
+}
 
 /**
  * 
@@ -49,30 +58,34 @@ function RangeTest()
 
 /**
  * 正規分布の確率密度関数
+ * @param {float} $value
+ * @param {float} $mean 平均値
+ * @param {float} $sd 標準偏差
+ * @return {float}
  */
-function ProbabilityDensityOfGaussianDistribution($value, $mean, $sd)
+function ProbabilityDensityOfGaussianDistribution($value, $mean, $sd): float
 {
 	return 1.0 / sqrt(2 * M_PI * pow($sd, 2)) * exp(-pow($value - $mean, 2) / pow(2 * $sd, 2));
 }
 
 /**
  * 標準正規分布の確率密度関数
- * @param {double} $value
- * @return {double}
+ * @param {float} $value
+ * @return {float}
  */
-function ProbabilityDensityOfNormalDistribution($value)
+function ProbabilityDensityOfNormalDistribution($value): float
 {
 	return ProbabilityDensityOfGaussianDistribution($value, 0, 1);
 }
 
 /**
  * 標準正規分布
- * @param {double} $lowerLimit 分布の下限
- * @param {double} $upperLimit 分布の下限
- * @param {double} $changeValue 離散の幅
+ * @param {float} $lowerLimit 分布の下限
+ * @param {float} $upperLimit 分布の下限
+ * @param {float} $changeValue 離散の幅
  * @return {array}
  */
-function NormalDistribution($lowerLimit, $upperLimit, $changeValue)
+function NormalDistribution($lowerLimit, $upperLimit, $changeValue): array
 {
 	$distribution = [];
 	foreach (range($lowerLimit, $upperLimit, $changeValue) as $value)
@@ -111,12 +124,12 @@ function NormalDistributionTest()
 
 /**
  * ある能力値と項目特性が与えられたときの正答確率
- * @param {double} $ability_theta 能力値（θ）
- * @param {double} $itemQuarity_a 識別力（aパラメタ）
- * @param {double} $itemDifficulty_b 困難度（ｂパラメタ）
+ * @param {float} $ability_theta 能力値（θ）
+ * @param {float} $itemQuarity_a 識別力（aパラメタ）
+ * @param {float} $itemDifficulty_b 困難度（ｂパラメタ）
  * @return {array} 正答確率
  */
-function CorrectProbability($ability_theta, $itemQuarity_a, $itemDifficulty_b)
+function CorrectProbability($ability_theta, $itemQuarity_a, $itemDifficulty_b): float
 {
 	return 1.0 / (1.0 + exp(-1.7 * $itemQuarity_a * ($ability_theta - $itemDifficulty_b)));
 }
@@ -124,29 +137,29 @@ function CorrectProbability($ability_theta, $itemQuarity_a, $itemDifficulty_b)
 /**
  * ある能力値と項目特性が与えられたときの反応確率
  * @param {int} $examineeResponse_x 反応（x）：正答はx=1，誤答はx=0
- * @param {double} $ability_theta 能力値（θ）
- * @param {double} $itemQuarity_a 識別力（aパラメタ）
- * @param {double} $itemDifficulty_b 困難度（ｂパラメタ）
+ * @param {float} $ability_theta 能力値（θ）
+ * @param {float} $itemQuarity_a 識別力（aパラメタ）
+ * @param {float} $itemDifficulty_b 困難度（ｂパラメタ）
  * @return {array} 正答確率
  */
-function ResponseProbability($examineeResponse_x, $ability_theta, $itemQuarity_a, $itemDifficulty_b)
+function ResponseProbability(int $examineeResponse_x, $ability_theta, $itemQuarity_a, $itemDifficulty_b): float
 {
 	$P = CorrectProbability($ability_theta, $itemQuarity_a, $itemDifficulty_b);
 	return pow($P, $examineeResponse_x) * pow(1.0 - $P, 1 - $examineeResponse_x);
 }
 
 /**
- * 項目特性曲線
+ * ある項目の特性曲線
  * @param {int} $examineeResponse_x 反応（x）
- * @param {double} $ability_theta 能力値（θ）
- * @param {double} $itemQuarity_a 識別力（aパラメタ）
- * @param {double} $itemDifficulty_b 困難度（ｂパラメタ）
- * @param {double} $lowerLimit 分布の下限
- * @param {double} $upperLimit 分布の下限
- * @param {double} $changeValue 離散の幅
+ * @param {float} $ability_theta 能力値（θ）
+ * @param {float} $itemQuarity_a 識別力（aパラメタ）
+ * @param {float} $itemDifficulty_b 困難度（ｂパラメタ）
+ * @param {float} $lowerLimit 分布の下限
+ * @param {float} $upperLimit 分布の下限
+ * @param {float} $changeValue 離散の幅
  * @return {array} 各能力値ごとの項目特性曲線配列
  */
-function ItemCharacteristicCurve($examineeResponse_x, $itemQuarity_a, $itemDifficulty_b, $lowerLimit, $upperLimit, $changeValue)
+function ItemCharacteristicCurve(int $examineeResponse_x, $itemQuarity_a, $itemDifficulty_b, $lowerLimit, $upperLimit, $changeValue): array
 {
 	$ItemCharacteristicCurve = [];
 	foreach (range($lowerLimit, $upperLimit, $changeValue) as $ability_theta) {
@@ -214,7 +227,7 @@ function ItemCharacteristicCurveTest()
  * @param {array} $V 配列
  * @return {int} 最大値をとるインデックス
  */
-function argmax($V)
+function argmax(array $V): int
 {
 	return array_search(max($V), $V);
 }
@@ -222,23 +235,23 @@ function argmax($V)
 /**
  * 回答された項目のパラメタと反応系列から能力値を推定
  * @param {array} $examineeResponse_x 配列
- * @param {array} $ItemBank [{"a"=>double,"b"=>double},]
- * @param {double} $lowerLimit 推定能力値の下限
- * @param {double} $upperLimit 推定能力値の下限
- * @param {double} $changeValue 能力値の推定精度
+ * @param {array} $itemBank [{"a"=>float,"b"=>float},]
+ * @param {float} $lowerLimit 推定能力値の下限
+ * @param {float} $upperLimit 推定能力値の下限
+ * @param {float} $changeValue 能力値の推定精度
  * @return {array} 事後分布
  */
-function Bayes($examineeResponses_X, $ItemBank, $lowerLimit, $upperLimit, $changeValue)
+function Bayes(array $examineeResponses_X, array $itemBank, $lowerLimit, $upperLimit, $changeValue)
 {
-	$N = count($examineeResponses_X);
+	$numberOfItem = count($examineeResponses_X);
 	$ability_theta = range($lowerLimit, $upperLimit, $changeValue);
 	$lowerLimitength = count($ability_theta);
 
 	$priorDistribution = NormalDistribution($lowerLimit, $upperLimit, $changeValue);
 	$posteriorDistribution = $priorDistribution;
 
-	for ($i = 0; $i < $N; $i++) {
-		$item = $ItemBank[$i];
+	for ($i = 0; $i < $numberOfItem; $i++) {
+		$item = $itemBank[$i];
 		$likelihood = ItemCharacteristicCurve(
 			$examineeResponses_X[$i],
 			$item["itemQuarity-a"],
@@ -250,9 +263,14 @@ function Bayes($examineeResponses_X, $ItemBank, $lowerLimit, $upperLimit, $chang
 		for ($t = 0; $t < $lowerLimitength; $t++)
 			$posteriorDistribution[$t] *= $likelihood[$t];
 	}
-	$evidence = array_sum($posteriorDistribution); //P(X)
+
+	//P(X)
+	$evidence = array_sum($posteriorDistribution); 
+
+	//P(X| θ ) P( θ)/ P(X)
 	for ($t = 0; $t < $lowerLimitength; $t++)
-		$posteriorDistribution[$t] /= $evidence; //P(X| θ ) P( θ)/ P(X)
+		$posteriorDistribution[$t] /= $evidence; 
+
 	return $posteriorDistribution;
 }
 
@@ -260,47 +278,65 @@ function Bayes($examineeResponses_X, $ItemBank, $lowerLimit, $upperLimit, $chang
 /**
  * 回答された項目のパラメタと反応系列から能力値を推定
  * @param {array} $examineeResponse_x 配列
- * @param {array} $ItemBank [{"a"=>double,"b"=>double},]
- * @param {double} $lowerLimit 推定能力値の下限
- * @param {double} $upperLimit 推定能力値の下限
- * @param {double} $changeValue 能力値の推定精度
- * @return {double} 能力値
+ * @param {array} $itemBank [{"a"=>float,"b"=>float},]
+ * @param {float} $lowerLimit 推定能力値の下限
+ * @param {float} $upperLimit 推定能力値の下限
+ * @param {float} $changeValue 能力値の推定精度
+ * @return {float} 能力値
  */
-function AbilityEstimation($examineeResponses_X, $ItemBank, $lowerLimit, $upperLimit, $changeValue)
+function AbilityEstimation(array $examineeResponses_X, array $itemBank, $lowerLimit, $upperLimit, $changeValue): float
 {
-	$probability = Bayes($examineeResponses_X, $ItemBank, $lowerLimit, $upperLimit, $changeValue);
+	$probability = Bayes($examineeResponses_X, $itemBank, $lowerLimit, $upperLimit, $changeValue);
 	$ability_theta = range($lowerLimit, $upperLimit, $changeValue);
 	$ability_theta = $ability_theta[argmax($probability)];
 	return $ability_theta;
 }
 
 
-function practice3()
+
+/**演習３
+ * 能力値推定のテスト
+ */
+function AbilityEstimationTest()
 {
+
+	$correctValues = [0.0072150241016594, 0.073054663336169, 0.30364122471314, 0.39989738382253, 0.2161917040265];
+
 	$changeValue =  1.0;
 	$lowerLimit = -2.0;
 	$upperLimit =  2.0;
 
-	$ItemBank = [array("a" => 1, "b" => 0)];
-	$examineeResponse_x = [1];
+	$itemBank = [array("itemQuarity-a" => 1.0, "itemDifficulty-b" => 0.0)];
+	$examineeResponse_X = [1];
 
-	$probability = Bayes($examineeResponse_x, $ItemBank, $lowerLimit, $upperLimit, $changeValue);
-	foreach ($probability as $p)
-		print($p . ",");
+	$getValues = Bayes($examineeResponse_X, $itemBank, $lowerLimit, $upperLimit, $changeValue);
+	for ($i = 0; $i < count($getValues); $i++) {
+		assert(
+			is_float($getValues[$i]),
+			new CustomError('事後分布が浮動小数点型ではありません．' . gettype($getValues[$i]))
+		);
+		assert(
+			abs($correctValues[$i] - $getValues[$i]) < 0.00001,
+			new CustomError('事後分布の値が異なります．' . $getValues[$i])
+		);
+	}
 
-	$ability_theta = AbilityEstimation($examineeResponse_x, $ItemBank, $lowerLimit, $upperLimit, $changeValue);
-	print("\nθ＝" . $ability_theta);
+	$ability_theta = AbilityEstimation($examineeResponse_X, $itemBank, $lowerLimit, $upperLimit, $changeValue);
+	assert(
+		$ability_theta == 1.0,
+		new CustomError('正答時の項目特性曲線の値が異なります．' . $ability_theta)
+	);
 }
-// practice3();
+
 
 
 /**
  * 
  */
-function EntropyCalculation($ability_theta, $ItemBank)
+function EntropyCalculation($ability_theta, $itemBank)
 {
 	$info = 0.0;
-	foreach ($ItemBank as $item) {
+	foreach ($itemBank as $item) {
 		$P = CorrectProbability($ability_theta, $item["a"], $item["b"]);
 		$info += 1.7 * 1.7 * $item["a"] * $item["a"] * $P * (1 - $P);
 	}
@@ -308,24 +344,24 @@ function EntropyCalculation($ability_theta, $ItemBank)
 }
 
 
-function EstimErrorCalculation($ability_theta, $ItemBank)
+function EstimErrorCalculation($ability_theta, $itemBank)
 {
-	return 1.0 / sqrt(EntropyCalculation($ability_theta, $ItemBank));
+	return 1.0 / sqrt(EntropyCalculation($ability_theta, $itemBank));
 }
 
-function TestEntropyCalculation($ItemBank, $lowerLimit, $upperLimit, $changeValue)
+function TestEntropyCalculation($itemBank, $lowerLimit, $upperLimit, $changeValue)
 {
 	$ability_theta = range($lowerLimit, $upperLimit, $changeValue);
 	$info = array_pad([], count($ability_theta), 0);
 	for ($t = 0; $t < count($ability_theta); $t++)
-		$info[$t] = EntropyCalculation($ability_theta[$t], $ItemBank);
+		$info[$t] = EntropyCalculation($ability_theta[$t], $itemBank);
 	return $info;
 }
 
-function AdaptiveItemSelection($ability_theta, $ItemBank)
+function AdaptiveItemSelection($ability_theta, $itemBank)
 {
 	$info = [];
-	foreach ($ItemBank as $item)
+	foreach ($itemBank as $item)
 		$info[] = EntropyCalculation($ability_theta, [array("a" => $item["a"], "b" => $item["b"])]);
 	return argmax($info);
 }
@@ -339,38 +375,57 @@ function practice4()
 // practice4();
 
 
-/*課題１*/
-//テスト情報量
-function simulation($N, $J)
+/**課題０
+ * TODO: 偏差をテスト
+ */
+function QuarityTest()
 {
+	$numberOfExaminee = 1000;
+	$numberOfQuestion = 100;
 
-	$ItemBank = [];
+	$changeValue =  1.0;
+	$lowerLimit = -2.0;
+	$upperLimit =  2.0;
+
+	$itemBank = [];
 	$i = 0;
-	while ($i++ < $N) //アイテムバンク生成
-		$ItemBank[] = array("a" => exp(RandomGauss(0.43, 0.20)), "b" => RandomGauss(-0.20, 1.16));
+	while ($i++ < $numberOfQuestion) //アイテムバンク生成
+		$itemBank[] = array("a" => exp(RandomGauss(0.43, 0.20)), "b" => RandomGauss(-0.20, 1.16));
 
-	$Test = $ItemBank; //アイテムバンクからテストを構成
+	$Test = $itemBank; //アイテムバンクからテストを構成
 
-	$Examinee = [];
+	$examinees = [];
 	$j = 0;
-	while ($j++ < $J) //受験者生成
+	//受験者生成
+	while ($j++ < $numberOfExaminee) 
 		$Examinee[] = RandomGauss(0, 1);
 
-	$error = []; //各受験者ごとの誤差
-	foreach ($Examinee as $ability_theta) {
+	foreach ($examinees as $abilityOfExaminee) {
 		$examineeResponse_x = []; //正誤
-		foreach ($Test as $test) //乱数が正答確率を下回った？そうであれば正解：なければ不正解
-			$examineeResponse_x[] = CorrectProbability($ability_theta, $test["a"], $test["b"]) > rand(0, 100) / 100 ? 1 : 0;
-		$itemQuarity_abilityEstimation = AbilityEstimation($examineeResponse_x, $Test, -3, 3, 0.1);
-		$error[] = abs($ability_theta - $itemQuarity_abilityEstimation);
+		foreach ($Test as $item) //乱数が正答確率を下回った？そうであれば正解：なければ不正解
+			$examineeResponse_x[] = CorrectProbability($abilityOfExaminee, $item["itemQuarity-a"], $item["itemDifficulty-b"]) > rand(0, 100) / 100 ? 1 : 0;
+		$itemQuarity_abilityEstimation = AbilityEstimation($examineeResponse_x, $Test, $lowerLimit, $upperLimit, $changeValue);
+		$error = abs($abilityOfExaminee - $itemQuarity_abilityEstimation);
+		assert(
+			$error > 3,
+			new CustomError('正答時の項目特性曲線の値が異なります．' . $ability_theta)
+		);
 	}
-	return array_sum($error) / count($Examinee);
 }
 // $result = simulation(100,100);
 // print("平均誤差：".$result."<br>");
 
 
-
+/**
+ * 受験者の反応
+ * @param {float} $ability_theta 能力値（θ）
+ * @param {float} $itemQuarity_a 識別力（aパラメタ）
+ * @param {float} $itemDifficulty_b 困難度（ｂパラメタ）
+ * @return {array} 正答確率
+ */
+function Response($ability_theta, $itemQuarity_a, $itemDifficulty_b){
+	return CorrectProbability($ability_theta, $itemQuarity_a, $itemDifficulty_b) > rand(0, 100) / 100 ? 1 : 0;
+}
 
 
 
@@ -401,18 +456,15 @@ function logArray($V)
 	return $lowerLimitogArray;
 }
 
-
-function RandomGauss($itemQuarity_av, $sd)
+/**
+ * ボックスミュラー法による正規乱数の生成
+ * @param {float} $mean 平均値
+ * @param {float} $sd 標準偏差
+ * @return {float}
+ */
+function RandomGauss($mean, $sd): float
 {
 	$examineeResponse_x = mt_rand() / mt_getrandmax();
 	$y = mt_rand() / mt_getrandmax();
-	return sqrt(-2 * log($examineeResponse_x)) * cos(2 * pi() * $y) * $sd + $itemQuarity_av;
-}
-
-
-
-if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
-	// RangeTest();
-	NormalDistributionTest();
-	ItemCharacteristicCurveTest();
+	return sqrt(-2 * log($examineeResponse_x)) * cos(2 * pi() * $y) * $sd + $mean;
 }
