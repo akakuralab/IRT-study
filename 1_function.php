@@ -4,13 +4,6 @@ declare(strict_types=1);
 class CustomError extends AssertionError
 { }
 
-if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
-	// RangeTest();
-	NormalDistributionTest();
-	ItemCharacteristicCurveTest();
-	AbilityEstimationTest();
-	QuarityTest();
-}
 
 /**
  * 
@@ -170,7 +163,7 @@ function ItemCharacteristicCurve(int $examineeResponse_x, $itemQuarity_a, $itemD
 
 
 
-/**演習２
+/**テスト２
  * 項目特性曲線のテスト
  */
 function ItemCharacteristicCurveTest()
@@ -235,13 +228,13 @@ function argmax(array $V): int
 /**
  * 回答された項目のパラメタと反応系列から能力値を推定
  * @param {array} $examineeResponse_x 配列
- * @param {array} $itemBank [{"a"=>float,"b"=>float},]
+ * @param {array} $itemBank [{"itemQuarity-a"=>float,"itemDifficulty-b"=>float},]
  * @param {float} $lowerLimit 推定能力値の下限
  * @param {float} $upperLimit 推定能力値の下限
  * @param {float} $changeValue 能力値の推定精度
  * @return {array} 事後分布
  */
-function Bayes(array $examineeResponses_X, array $itemBank, $lowerLimit, $upperLimit, $changeValue)
+function Bayes(array $examineeResponses_X, array $itemBank, $lowerLimit, $upperLimit, $changeValue): array
 {
 	$numberOfItem = count($examineeResponses_X);
 	$ability_theta = range($lowerLimit, $upperLimit, $changeValue);
@@ -278,7 +271,7 @@ function Bayes(array $examineeResponses_X, array $itemBank, $lowerLimit, $upperL
 /**
  * 回答された項目のパラメタと反応系列から能力値を推定
  * @param {array} $examineeResponse_x 配列
- * @param {array} $itemBank [{"a"=>float,"b"=>float},]
+ * @param {array} $itemBank [{"itemQuarity-a"=>float,"itemDifficulty-b"=>float},]
  * @param {float} $lowerLimit 推定能力値の下限
  * @param {float} $upperLimit 推定能力値の下限
  * @param {float} $changeValue 能力値の推定精度
@@ -294,7 +287,7 @@ function AbilityEstimation(array $examineeResponses_X, array $itemBank, $lowerLi
 
 
 
-/**演習３
+/**テスト３
  * 能力値推定のテスト
  */
 function AbilityEstimationTest()
@@ -333,28 +326,28 @@ function AbilityEstimationTest()
 /**
  * 
  */
-function EntropyCalculation($ability_theta, $itemBank)
+function ItemInfoCalculation($ability_theta, $itemBank)
 {
 	$info = 0.0;
 	foreach ($itemBank as $item) {
-		$P = CorrectProbability($ability_theta, $item["a"], $item["b"]);
-		$info += 1.7 * 1.7 * $item["a"] * $item["a"] * $P * (1 - $P);
+		$P = CorrectProbability($ability_theta, $item["itemQuarity-a"], $item["itemDifficulty-b"]);
+		$info += 1.7 * 1.7 * $item["itemQuarity-a"] * $item["itemQuarity-a"] * $P * (1 - $P);
 	}
 	return $info;
 }
 
 
-function EstimErrorCalculation($ability_theta, $itemBank)
+function EstimErrorCalculation($ability_theta, array $itemBank): float
 {
-	return 1.0 / sqrt(EntropyCalculation($ability_theta, $itemBank));
+	return 1.0 / sqrt(ItemInfoCalculation($ability_theta, $itemBank));
 }
 
-function TestEntropyCalculation($itemBank, $lowerLimit, $upperLimit, $changeValue)
+function TestInfoCalculation(array $itemBank, $lowerLimit, $upperLimit, $changeValue): array
 {
 	$ability_theta = range($lowerLimit, $upperLimit, $changeValue);
 	$info = array_pad([], count($ability_theta), 0);
 	for ($t = 0; $t < count($ability_theta); $t++)
-		$info[$t] = EntropyCalculation($ability_theta[$t], $itemBank);
+		$info[$t] = ItemInfoCalculation($ability_theta[$t], $itemBank);
 	return $info;
 }
 
@@ -362,58 +355,68 @@ function AdaptiveItemSelection($ability_theta, $itemBank)
 {
 	$info = [];
 	foreach ($itemBank as $item)
-		$info[] = EntropyCalculation($ability_theta, [array("a" => $item["a"], "b" => $item["b"])]);
+		$info[] = ItemInfoCalculation($ability_theta, [array("itemQuarity-a" => $item["itemQuarity-a"], "itemDifficulty-b" => $item["itemDifficulty-b"])]);
 	return argmax($info);
 }
-// print(AdaptiveItemSelection(0,[["a"=>0.3,"b"=>0],["a"=>1.0,"b"=>1.0],["a"=>1.0,"b"=>1.1]]));
+// print(AdaptiveItemSelection(0,[["itemQuarity-a"=>0.3,"itemDifficulty-b"=>0],["itemQuarity-a"=>1.0,"itemDifficulty-b"=>1.0],["itemQuarity-a"=>1.0,"itemDifficulty-b"=>1.1]]));
 
 function practice4()
 {
-	$info = EntropyCalculation(0, [array("a" => 1, "b" => 0)]);
+	$info = ItemInfoCalculation(0, [array("itemQuarity-a" => 1, "itemDifficulty-b" => 0)]);
 	print_r($info);
 }
-// practice4();
+
 
 
 /**課題０
  * TODO: 偏差をテスト
  */
-function QuarityTest()
+function SystemQuarityTest()
 {
-	$numberOfExaminee = 1000;
 	$numberOfQuestion = 100;
+	$numberOfExaminee = 100;
 
-	$changeValue =  1.0;
-	$lowerLimit = -2.0;
-	$upperLimit =  2.0;
+	$changeValue =  0.01;
+	$lowerLimit = -3.0;
+	$upperLimit =  3.0;
 
 	$itemBank = [];
 	$i = 0;
 	while ($i++ < $numberOfQuestion) //アイテムバンク生成
-		$itemBank[] = array("a" => exp(RandomGauss(0.43, 0.20)), "b" => RandomGauss(-0.20, 1.16));
+		$itemBank[] = array("itemQuarity-a" => exp(RandomGauss(0, 1)), "itemDifficulty-b" => RandomGauss(0, 1));
 
-	$Test = $itemBank; //アイテムバンクからテストを構成
+	$testSet = $itemBank; //アイテムバンクからテストを構成
 
 	$examinees = [];
 	$j = 0;
 	//受験者生成
 	while ($j++ < $numberOfExaminee) 
-		$Examinee[] = RandomGauss(0, 1);
+		$examinees[] = RandomGauss(0, 1);
 
+	$numberOfOutlier = 0;
 	foreach ($examinees as $abilityOfExaminee) {
-		$examineeResponse_x = []; //正誤
-		foreach ($Test as $item) //乱数が正答確率を下回った？そうであれば正解：なければ不正解
-			$examineeResponse_x[] = CorrectProbability($abilityOfExaminee, $item["itemQuarity-a"], $item["itemDifficulty-b"]) > rand(0, 100) / 100 ? 1 : 0;
-		$itemQuarity_abilityEstimation = AbilityEstimation($examineeResponse_x, $Test, $lowerLimit, $upperLimit, $changeValue);
-		$error = abs($abilityOfExaminee - $itemQuarity_abilityEstimation);
-		assert(
-			$error > 3,
-			new CustomError('正答時の項目特性曲線の値が異なります．' . $ability_theta)
-		);
+		$estimationError = EstimErrorCalculation($abilityOfExaminee, $testSet);
+		$examineeResponse_X = []; //正誤
+		foreach ($testSet as $item) 
+			$examineeResponse_X[] = Response($abilityOfExaminee, $item["itemQuarity-a"], $item["itemDifficulty-b"]);
+		$abilityOfEstimation = AbilityEstimation($examineeResponse_X, $testSet, $lowerLimit, $upperLimit, $changeValue);
+
+		$numberOfOutlier += (abs($abilityOfExaminee - $abilityOfEstimation) > $estimationError ? 1 : 0);
 	}
+	$errorRate = $numberOfOutlier / $numberOfExaminee;
+	assert(
+		$errorRate < 1.000 - 0.683,
+		new CustomError('推定誤差が大きすぎます．' . $errorRate)
+	);
 }
-// $result = simulation(100,100);
-// print("平均誤差：".$result."<br>");
+
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+	// RangeTest();
+	NormalDistributionTest();
+	ItemCharacteristicCurveTest();
+	AbilityEstimationTest();
+	SystemQuarityTest();
+}
 
 
 /**
